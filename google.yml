@@ -1,0 +1,14 @@
+- name: Crear usuarios en Google Workspace
+  hosts: localhost
+  gather_facts: false
+
+  tasks:
+    - name: "Generar script Python"
+      template:
+        src: "create_users.py.j2"
+        dest: "create_users.py"
+      vars:
+        users: "{{ lookup('file', 'users.yml') | from_yaml }}"
+
+    - name: "Crear usuarios"
+      command: "python3 create_users.py"

@@ -1,0 +1,52 @@
+import os
+from google.oauth2 import service_account
+from googleapiclient.errors import HttpError
+from googleapiclient.discovery import build
+
+# Cargamos las credenciales de la cuenta de servicio
+creds = None
+SCOPES = ['https://www.googleapis.com/auth/admin.directory.user',
+          'https://www.googleapis.com/auth/admin.directory.group']
+SERVICE_ACCOUNT_FILE = 'service_account_credentials.json'
+
+if os.path.exists(SERVICE_ACCOUNT_FILE):
+    creds = service_account.Credentials.from_service_account_file(
+        SERVICE_ACCOUNT_FILE, scopes=SCOPES)
+
+# Creamos el cliente de la API de Directory
+directory_service = build('admin', 'directory_v1', credentials=creds)
+
+# Leemos el archivo users.yml para obtener la información de los usuarios
+import yaml
+
+with open('users.yml') as file:
+    users = yaml.load(file, Loader=yaml.FullLoader)['users']
+
+# Creamos un usuario en Google Workspace para cada entrada en el archivo users.yml
+for user_data in users.values():
+    # Creamos el objeto de usuario
+    user = {
+        "name": {
+            "givenName": user_data['given_name'],
+            "familyName": user_data['surname']
+        },
+        "password": user_data['password'],
+        "primaryEmail": user_data['email'],
+        "changePasswordAtNextLogin": True
+    }
+
+    # Creamos el usuario en Google Workspace
+    try:
+        result = directory_service.users().insert(body=user).execute()
+        print(f"El usuario {result['primaryEmail']} ha sido creado con éxito.")
+    except HttpError as error:
+        print(f"Ocurrió un error al crear el usuario: {error}")
+
+    try:
+        member = {"email": user_data['email']}
+        directory_service.members().insert(groupKey='todos@nosolosoftware.es', body=member).execute()
+        print(f"El usuario {user_data['email']} ha sido añadido al grupo group@domain.ext")
+    except HttpError as error:
+        print(f"Ocurrió un error al añadir el usuario al grupo: {error}")
+
+
