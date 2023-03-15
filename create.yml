@@ -1,0 +1,32 @@
+- name: Create LDAP users
+  hosts: localhost
+  vars_files:
+    - vars.yml
+    - users.yml
+  tasks:
+  - name: Debug variables
+    debug:
+      var: ldap_server, ldap_admin_user, ldap_admin_password, ldap_base_dn, users
+
+  - name: Create LDAP user
+    ldap_entry:
+      dn: "uid={{ item.key }},{{ ldap_base_dn }}"
+      objectClass:
+        - inetOrgPerson
+        - posixAccount
+      attributes:
+        cn: "{{ item.value.given_name }}"
+        gidNumber: "{{ item.value.gid_number }}"
+        givenName: "{{ item.value.given_name }}"
+        homeDirectory: "/home/{{ item.key }}"
+        loginShell: "/bin/bash"
+        mail: "{{ item.value.email }}"
+        sn: "{{ item.value.surname }}"
+        uid: "{{ item.key }}"
+        uidNumber: "{{ item.value.uid_number }}"
+        userPassword: "{{ '{CRYPT}' + item.value.password | password_hash('sha256', salt=item.key[:12]) }}"
+      state: "present"
+      server_uri: "{{ ldap_server }}"
+      bind_dn: "{{ ldap_admin_user }}"
+      bind_pw: "{{ ldap_admin_password }}"
+    loop: "{{ users | dict2items }}"

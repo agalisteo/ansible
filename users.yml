@@ -1,0 +1,15 @@
+users:
+  user1:
+    given_name: Xxxx
+    surname: Xxxx Xxxx
+    password: xxxx
+    uid_number: xxxx
+    gid_number: xxxx
+    email: email@domain.ext
+  user2:
+    given_name: Xxxx
+    surname: Xxxx Xxxx
+    password: xxxx
+    uid_number: xxxx
+    gid_number: xxxx
+    email: email@domain.ext
